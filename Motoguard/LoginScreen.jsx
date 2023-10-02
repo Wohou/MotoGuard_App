@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { db } from "./GetData";
 import { ref, set, get } from "firebase/database";
+import './App';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -23,6 +24,9 @@ const LoginScreen = ({ navigation }) => {
   const checkData = async () => {
     console.log("checkData TODO");
     navigation.navigate("Map");
+    if (!global.email) {
+      global.email = email;
+    }
   };
 
   return (

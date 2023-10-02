@@ -1,13 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
 import MapView, { Marker } from "react-native-maps";
-import { StyleSheet, View, Dimensions, TouchableOpacity, Text } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import * as Location from "expo-location";
+import {encode as btoa} from 'base-64';
+import { ref, get } from 'firebase/database';
+import { db } from './GetData';
 
-export default function MapScreen() {
-  const [Pseudo, setPseudo] = useState("Benjamin");
+const  MapScreen = ({navigation}) => {
+  const [Pseudo, setPseudo] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
   const mapRef = useRef(null);
+
+  useEffect(() => {
+    const getPseudoFromDb = async () => {
+        encodeMail = btoa(global.mail.trim().toLowerCase());
+        const response = await get(ref(db, `posts/${encodeMail}`));
+        const response_pseudo = response.exportVal();
+        
+        if (response_pseudo && response_pseudo[encodeMail]) {
+            const userPseudo = response_pseudo[encodeMail].pseudo;
+            setPseudo(userPseudo);
+            console.log("Pseudo from response: ", userPseudo);
+        } else {
+            console.log("User not found or missing data in the response.");
+        }
+    };
+    getPseudoFromDb();
+}, [])
 
   const updateUserLocation = async () => {
     try {
@@ -58,6 +78,10 @@ export default function MapScreen() {
     return cleanup;
   }, []);
 
+  const ProfilePress = () => {
+    navigation.navigate("Profile");
+  };
+
   const goToUserLocation = () => {
     const region = {
       latitude: userLocation.latitude,
@@ -79,8 +103,10 @@ export default function MapScreen() {
         <Marker coordinate={userLocation} title={`${Pseudo}'s marker`} isPreselected={true} />
         )}
       </MapView>
-        <Text onPress={() => {console.log("Profile clicked")}} style={styles.profile}> Profile </Text>
-        <Text onPress={() => {goToUserLocation(), console.log("Go To clicked")}} style={styles.GoBack}> Go to </Text>
+        <Text onPress={() => {ProfilePress(), console.log("Profile clicked")}} style={styles.profile}> Profile </Text>
+        {userLocation && (
+          <Text onPress={() => {goToUserLocation(), console.log("Go To clicked")}} style={styles.GoBack}> Go to </Text>
+        )}
     </View>
   );
 }
@@ -117,3 +143,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
 });
+
+export default MapScreen;

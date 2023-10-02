@@ -4,11 +4,13 @@ import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from './LoginScreen';
 import MapScreen from './MapScreen';
 import CreateLogin from './CreateLogin';
+import ProfilePage from './ProfilePage';
 
 const Stack = createStackNavigator();
 
 const App = () => {
   return (
+    global.mail = "",
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen
@@ -45,6 +47,21 @@ const App = () => {
             },
             headerTitleAlign: "center",
           }}
+        />
+        <Stack.Screen
+        name="Profile"
+        component={ProfilePage}
+        options={{
+          title: 'Profile Page',
+          headerStyle: {
+            backgroundColor: '#C1121F',
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+          headerTitleAlign: "center",
+        }}
         />
       </Stack.Navigator>
     </NavigationContainer>

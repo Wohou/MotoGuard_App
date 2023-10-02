@@ -4,10 +4,12 @@ import { db } from "./GetData";
 import { ref, set, get } from 'firebase/database';
 import { encode } from 'base-64';
 import uuid from 'react-native-uuid';
+import './App';
 
 const CreateLogin = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const default_img = "https://images.caradisiac.com/images/1/7/4/6/191746/S0-honda-presente-la-cbr500r-2022-688481.jpg";
 
   const checkEmailExists = async () => {
     const encodedMail = btoa(email.trim().toLowerCase());
@@ -30,13 +32,16 @@ const CreateLogin = ({ navigation }) => {
         return;
     }
     const encodedMail = btoa(email);
+    const pseudofromMail = trimmedEmail.split("@",1)[0];
     set(ref(db, `posts/${encodedMail}`), {
       email: trimmedEmail,
       password: password,
       uuid: uuid.v1(),
+      pseudo: pseudofromMail,
     });
     setEmail('')
     setPassword('')
+    global.mail = trimmedEmail;
   }
 
   return (

@@ -4,7 +4,7 @@ import { db } from "./GetData";
 import { ref, set, get } from 'firebase/database';
 import { encode } from 'base-64';
 import uuid from 'react-native-uuid';
-import './App';
+// import {global} from './App';
 
 const CreateLogin = ({ navigation }) => {
   const [email, setEmail] = useState('');

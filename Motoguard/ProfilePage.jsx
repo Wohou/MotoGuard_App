@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TextInput } from 'react-native';
-import { doc, setDoc } from 'firebase/firestore';
-import { ref, set, get } from 'firebase/database';
+import { ref, set, get, update } from 'firebase/database';
 import { db } from './GetData';
-import {encode as btoa} from 'base-64'
-import "./App";
+import {encode as btoa} from 'base-64';
+import {global} from './App';
 
 const ProfilePage = () => {
   const [pseudo, setPseudo] = useState('Utilisateur');
@@ -13,7 +12,8 @@ const ProfilePage = () => {
 
     useEffect(() => {
         const getPseudoFromDb =  async () => {
-            encodeMail = btoa(global.mail.trim().toLowerCase());
+            encodeMail = btoa("user@example.com");
+            // encodeMail = btoa(global.mail.trim().toLowerCase());
             const response = await get(ref(db, `posts/${encodeMail}`));
             console.log("Get pseudo:", response.exportVal().pseudo);
             setPseudo(response.exportVal().pseudo);
@@ -24,19 +24,19 @@ const ProfilePage = () => {
 
     const changePseudoDb = async () => {
         try {
-          encodeMail = btoa(global.mail.trim().toLowerCase());
+          encodeMail = btoa("user@example.com")
+          // encodeMail = btoa(global.mail.trim().toLowerCase());
 
           const currentData = await get(ref(db, `posts/${encodeMail}`));
           const currentPseudo = currentData.exportVal().pseudo;
 
           if (currentPseudo !== NewPseudo) {
-            await set(ref(db, `posts/${encodeMail}`), {
-              ...currentData.exportVal(),
+            await update(ref(db, `posts/${encodeMail}`), {
               pseudo: NewPseudo.trim(),
             });
-    
+
             setPseudo(NewPseudo.trim());
-    
+
             console.log("Pseudo mis à jour avec succès !");
           } else {
             console.log("Le pseudo est le même. Aucune mise à jour nécessaire.");
@@ -52,12 +52,15 @@ const ProfilePage = () => {
         source={{uri :ProfilePhoto}}
         style={styles.profileImage}
       />
-      <Text style={styles.welcomeText}>Bienvenue {pseudo}</Text>
+      <Text style={styles.welcomeText}>
+        Bienvenue
+        <Text style={styles.PseudoText}> {pseudo}</Text>
+        </Text>
       <TextInput
         style={styles.input}
         placeholder="Entrez votre pseudo"
         placeholderTextColor="white"
-        onChangeText={(newPseudo) => setNewPseudo(newPseudo)} 
+        onChangeText={(newPseudo) => setNewPseudo(newPseudo)}
         />
         <Text onPress={() => {changePseudoDb()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F" }}>
             Ajouter
@@ -77,6 +80,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: 20,
     color: "white",
+  },
+  PseudoText: {
+    marginTop: "2%",
+    fontSize: 20,
+    marginBottom: 20,
+    color: "white",
+    fontWeight: "bold",
   },
   profileImage: {
     width: '100%',

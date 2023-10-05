@@ -5,12 +5,11 @@ import LoginScreen from './LoginScreen';
 import MapScreen from './MapScreen';
 import CreateLogin from './CreateLogin';
 import ProfilePage from './ProfilePage';
-
 const Stack = createStackNavigator();
 
 const App = () => {
   return (
-    global.mail = "",
+    window.mail = "",
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen

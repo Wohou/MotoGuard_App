@@ -14,20 +14,19 @@ const  MapScreen = ({navigation}) => {
 
   useEffect(() => {
     const getPseudoFromDb = async () => {
-        encodeMail = btoa(global.mail.trim().toLowerCase());
-        const response = await get(ref(db, `posts/${encodeMail}`));
-        const response_pseudo = response.exportVal();
-        
-        if (response_pseudo && response_pseudo[encodeMail]) {
-            const userPseudo = response_pseudo[encodeMail].pseudo;
-            setPseudo(userPseudo);
-            console.log("Pseudo from response: ", userPseudo);
-        } else {
-            console.log("User not found or missing data in the response.");
-        }
+    encodeMail = btoa("user@example.com");
+    console.log("encoded mail of map", encodeMail);
+    const response = await get(ref(db, `posts/${encodeMail}`));
+    const response_pseudo = response.exportVal();
+    console.log("response: ", response_pseudo.pseudo);
+      if (response) {
+          setPseudo(response_pseudo.pseudo);
+      } else {
+          console.log("User not found or missing data in the response.");
+      }
     };
-    getPseudoFromDb();
-}, [])
+    getPseudoFromDb(); getPseudoFromDb();
+  }, [])
 
   const updateUserLocation = async () => {
     try {

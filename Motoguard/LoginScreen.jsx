@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { db } from "./GetData";
 import { ref, set, get } from "firebase/database";
-import './App';
+import { encode } from 'base-64';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -21,12 +21,33 @@ const LoginScreen = ({ navigation }) => {
     setIsPasswordHidden(!isPasswordHidden);
   };
 
+  if (!global.btoa) {
+    global.btoa = encode;
+  }
+
+  console.log("email == ", email);
+
   const checkData = async () => {
-    console.log("checkData TODO");
-    navigation.navigate("Map");
-    if (!global.email) {
-      global.email = email;
+    const encodeMail = btoa(email);
+    const userRef = ref(db, `posts/${encodeMail}`);
+    const userSnapshot = await get(userRef);
+
+    if (!userSnapshot.exists()) {
+      alert("Utilisateur inexistant");
+      console.log("Utilisateur inexistant");
+      return;
     }
+
+    const userPassword = userSnapshot.val().password;
+
+    if (password !== userPassword) {
+      alert("Mot de passe incorrect");
+      console.log("Mot de passe incorrect");
+      return;
+    }
+
+    navigation.navigate("Map");
+    global.email = email;
   };
 
   return (

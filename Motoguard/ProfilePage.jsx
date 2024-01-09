@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TextInput } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { ref, set, get, update } from 'firebase/database';
 import { db } from './GetData';
 import {encode as btoa} from 'base-64';
@@ -15,13 +16,30 @@ const ProfilePage = () => {
             encodeMail = btoa("user@example.com");
             // encodeMail = btoa(global.mail.trim().toLowerCase());
             const response = await get(ref(db, `posts/${encodeMail}`));
-            console.log("Get pseudo:", response.exportVal().pseudo);
             setProfilePhoto(response.exportVal().pdp)
             setPseudo(response.exportVal().pseudo);
         };
         getPseudoFromDb();
     }, []);
 
+    const sendPhotoToDb = (ImageProfile) => {
+      encodedMail = btoa("user@example.com");
+      if (ImageProfile !== ''){
+        update(ref(db, `posts/${encodedMail}`),{
+          pdp: ImageProfile,
+        });
+    }}
+
+    const pickImage = async () => {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+      setProfilePhoto(result.assets[0].uri);
+      sendPhotoToDb(result.assets[0].uri)
+    };
 
     const changePseudoDb = async () => {
         try {
@@ -50,8 +68,6 @@ const ProfilePage = () => {
       const changeImageDb = async () => {
         try {
           encodeMail = btoa("user@example.com")
-          // encodeMail = btoa(global.mail.trim().toLowerCase());
-
           const currentData = await get(ref(db, `posts/${encodeMail}`));
           const currentImage = currentData.exportVal().pdp;
 
@@ -89,10 +105,10 @@ const ProfilePage = () => {
         placeholderTextColor="white"
         onChangeText={(newPseudo) => setNewPseudo(newPseudo)}
         />
-        <Text onPress={() => {changePseudoDb()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F" }}>
+        <Text onPress={() => {changePseudoDb()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F", marginTop: 5}}>
             Ajouter
         </Text>
-        <Text onPress={() => {changeImageDb()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F", marginTop: 50}}>
+        <Text onPress={() => {pickImage()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F", marginTop: 50}}>
         ✏️ Changer La Photo de profil
         </Text>
     </View>

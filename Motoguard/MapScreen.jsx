@@ -8,79 +8,59 @@ import { db } from './GetData';
 
 const  MapScreen = ({navigation}) => {
   const [Pseudo, setPseudo] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState({
+    latitude: 43.669584,
+    longitude: 7.215500,
+    latitudeDelta: 0.001,
+    longitudeDelta: 0.001,
+  });
 
   const mapRef = useRef(null);
 
-  useEffect(() => {
-    const getPseudoFromDb = async () => {
+  const getPseudoFromDb = async () => {
+    try {
       encodeMail = btoa("user@example.com");
       const response = await get(ref(db, `posts/${encodeMail}`));
       const response_pseudo = response.exportVal();
-      console.log("response: ", response_pseudo.pseudo);
-        if (response) {
-            setPseudo(response_pseudo.pseudo);
-        } else {
-            console.log("User not found or missing data in the response.");
-        }
-      };
-      getPseudoFromDb();
-  }, [])
-
-  const updateUserLocation = async () => {
-    try {
-      let { status } = await Location.requestBackgroundPermissionsAsync();
-      if (status !== "granted") {
-        setErrorMsg("Permission to access denied");
+      if (response) {
+        setPseudo(response_pseudo.pseudo);
+      } else {
+        console.log("User not found or missing data in the response.");
       }
-
-      let location = await Location.getCurrentPositionAsync({
-        enableHighAccuracy: true,
-      });
-
-      setUserLocation({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-
-      if (mapRef.current) {
-        mapRef.current.animateToRegion({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.010,
-          longitudeDelta: 0.006,
-        });
-      }
-
-      console.log(location.coords.latitude, location.coords.longitude);
-
-      await Location.stopLocationUpdatesAsync("my-task-name");
     } catch (error) {
-      console.log("Error Location");
-      setUserLocation({
-        latitude: 43.669584,
-        longitude: 7.215500,
-      });
+      console.error('Erreur lors de la récupération du pseudo depuis la base de données :', error);
     }
   };
 
   useEffect(() => {
-    const cleanup = async () => {
-      try {
-        await Location.stopLocationUpdatesAsync("my-task-name");
-      } catch (error) {
-        console.log("Error");
-      }
-    };
-
     updateUserLocation();
-
-    return cleanup;
   }, []);
 
-  const ProfilePress = () => {
-    navigation.navigate("Profile");
-  };
+  useEffect(() => {
+    // Get user's location
+    const loadPseudo = async () => {
+      await getPseudoFromDb();
+    };
+
+    loadPseudo();
+  }, [Pseudo]);
+
+
+  const updateUserLocation = async () => {
+    let { status } = Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      setErrorMsg('Permission to access location was denied');
+    }
+    let location = await Location.getCurrentPositionAsync({enableHighAccuracy: true});
+    setMapRegion({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+    console.log(location.coords.latitude, location.coords.longitude);
+    }
+
 
   const goToUserLocation = () => {
     const region = {
@@ -92,6 +72,9 @@ const  MapScreen = ({navigation}) => {
     mapRef.current.animateToRegion(region, 500);
   };
 
+  const ProfilePress = () => {
+    navigation.navigate("Profile");
+  };
   return (
     <View style={styles.container}>
       <MapView
@@ -105,7 +88,7 @@ const  MapScreen = ({navigation}) => {
       </MapView>
         <Text onPress={() => {ProfilePress(), console.log("Profile clicked")}} style={styles.profile}> Profile </Text>
         {userLocation && (
-          <Text onPress={() => {goToUserLocation(), console.log("Go To clicked")}} style={styles.GoBack}> Go to </Text>
+          <Text onPress={() => {goToUserLocation(), getPseudoFromDb()}} style={styles.GoBack}> Go to </Text>
         )}
         <Text onPress={() =>  updateUserLocation()} style={styles.Update_Button}> Update </Text>
     </View>
@@ -155,3 +138,11 @@ const styles = StyleSheet.create({
 });
 
 export default MapScreen;
+
+// if (mapRef.current) {
+  //       mapRef.current.animateToRegion({
+  //         latitude: location.coords.latitude,
+  //         longitude: location.coords.longitude,
+  //         latitudeDelta: 0.010,
+  //         longitudeDelta: 0.006,
+  //       });

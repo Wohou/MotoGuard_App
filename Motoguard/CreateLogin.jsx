@@ -62,6 +62,9 @@ const CreateLogin = ({ navigation }) => {
       uuid: uuid.v1(),
       pseudo: pseudofromMail,
       pdp: imageBase64,
+      CanAccesLocation: false,
+      Latitude: 43.669584,
+      Longitude: 7.215500,
     });
     setEmail('')
     setPassword('')

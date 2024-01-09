@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, TextInput, Pressable, Dimensions} from "react-native";
 import { db } from "./GetData";
 import { ref, set, get } from 'firebase/database';
@@ -9,7 +9,30 @@ import uuid from 'react-native-uuid';
 const CreateLogin = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const default_img = "https://images.caradisiac.com/images/1/7/4/6/191746/S0-honda-presente-la-cbr500r-2022-688481.jpg";
+  const [imageBase64, setImageBase64] = useState('');
+
+  useEffect(() => {
+    const imageUrl = "https://images.caradisiac.com/images/1/7/4/6/191746/S0-honda-presente-la-cbr500r-2022-688481.jpg";
+
+    const fetchImage = async () => {
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          const base64data = reader.result;
+          setImageBase64(base64data);
+        };
+
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error('Erreur lors du chargement de l\'image :', error);
+      }
+    };
+
+    fetchImage();
+  }, []);
 
   const checkEmailExists = async () => {
     const encodedMail = btoa(email.trim().toLowerCase());
@@ -38,6 +61,7 @@ const CreateLogin = ({ navigation }) => {
       password: password,
       uuid: uuid.v1(),
       pseudo: pseudofromMail,
+      pdp: imageBase64,
     });
     setEmail('')
     setPassword('')
@@ -50,7 +74,7 @@ const CreateLogin = ({ navigation }) => {
 
       <TextInput
         placeholder="Email"
-        placeholderTextColor="#e6e6e6" 
+        placeholderTextColor="#e6e6e6"
         value={email}
         onChangeText= {(text) => setEmail(text)}
         style={styles.input}
@@ -58,7 +82,7 @@ const CreateLogin = ({ navigation }) => {
 
       <TextInput
         placeholder="Mot de passe"
-        placeholderTextColor="#e6e6e6" 
+        placeholderTextColor="#e6e6e6"
         value={password}
         onChangeText= {(text) => setPassword(text)}
         style={styles.input}

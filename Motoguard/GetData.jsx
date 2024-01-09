@@ -3,15 +3,15 @@ import {getDatabase} from 'firebase/database';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCSHrYTUkc_U4fl_X1xOMweeH-BSwZjjx4",
-    authDomain: "motoguard-400508.firebaseapp.com",
-    databaseURL: "https://motoguard-400508-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "motoguard-400508",
-    storageBucket: "motoguard-400508.appspot.com",
-    messagingSenderId: "388962084076",
-    appId: "1:388962084076:web:cf502b377feebca459f1c9",
-    measurementId: "G-JHPGJQX0DX"
-  }
+  apiKey: "AIzaSyCc3Bi2shNmnGN5QwG4Z9UN-EgFmbUpqtk",
+  authDomain: "motoguard-34a8b.firebaseapp.com",
+  projectId: "motoguard-34a8b",
+  storageBucket: "motoguard-34a8b.appspot.com",
+  messagingSenderId: "812412995184",
+  appId: "1:812412995184:web:f82e5f2fa8f6794af696b5"
+
+};
+
 
 if (firebase.apps.length === 0) {
     firebase.initializeApp(firebaseConfig);

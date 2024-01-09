@@ -8,7 +8,7 @@ import {global} from './App';
 const ProfilePage = () => {
   const [pseudo, setPseudo] = useState('Utilisateur');
   const [NewPseudo, setNewPseudo] = useState(pseudo);
-  const [ProfilePhoto, setProfilePhoto] = useState("https://images.caradisiac.com/images/1/7/4/6/191746/S0-honda-presente-la-cbr500r-2022-688481.jpg");
+  const [ProfilePhoto, setProfilePhoto] = useState('');
 
     useEffect(() => {
         const getPseudoFromDb =  async () => {
@@ -16,6 +16,7 @@ const ProfilePage = () => {
             // encodeMail = btoa(global.mail.trim().toLowerCase());
             const response = await get(ref(db, `posts/${encodeMail}`));
             console.log("Get pseudo:", response.exportVal().pseudo);
+            setProfilePhoto(response.exportVal().pdp)
             setPseudo(response.exportVal().pseudo);
         };
         getPseudoFromDb();
@@ -46,12 +47,38 @@ const ProfilePage = () => {
         }
       };
 
+      const changeImageDb = async () => {
+        try {
+          encodeMail = btoa("user@example.com")
+          // encodeMail = btoa(global.mail.trim().toLowerCase());
+
+          const currentData = await get(ref(db, `posts/${encodeMail}`));
+          const currentImage = currentData.exportVal().pdp;
+
+          if (currentImage !== NewImage) {
+            await update(ref(db, `posts/${encodeMail}`), {
+              pseudo: NewImage.trim(),
+            });
+
+            setPseudo(NewImage.trim());
+
+            console.log("Image mis à jour avec succès !");
+          } else {
+            console.log("L'image est la même. Aucune mise à jour nécessaire.");
+          }
+        } catch (error) {
+          console.error("Erreur lors de la mise à jour de l'image :", error);
+        }
+      };
+
   return (
     <View style={styles.container}>
-      <Image
-        source={{uri :ProfilePhoto}}
-        style={styles.profileImage}
-      />
+      {ProfilePhoto && (
+        <Image
+          source={{ uri: ProfilePhoto }}
+          style={styles.profileImage}
+        />
+      )}
       <Text style={styles.welcomeText}>
         Bienvenue
         <Text style={styles.PseudoText}> {pseudo}</Text>
@@ -64,6 +91,9 @@ const ProfilePage = () => {
         />
         <Text onPress={() => {changePseudoDb()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F" }}>
             Ajouter
+        </Text>
+        <Text onPress={() => {changeImageDb()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F", marginTop: 50}}>
+        ✏️ Changer La Photo de profil
         </Text>
     </View>
   );

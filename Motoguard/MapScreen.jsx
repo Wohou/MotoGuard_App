@@ -14,18 +14,17 @@ const  MapScreen = ({navigation}) => {
 
   useEffect(() => {
     const getPseudoFromDb = async () => {
-    encodeMail = btoa("user@example.com");
-    console.log("encoded mail of map", encodeMail);
-    const response = await get(ref(db, `posts/${encodeMail}`));
-    const response_pseudo = response.exportVal();
-    console.log("response: ", response_pseudo.pseudo);
-      if (response) {
-          setPseudo(response_pseudo.pseudo);
-      } else {
-          console.log("User not found or missing data in the response.");
-      }
-    };
-    getPseudoFromDb(); getPseudoFromDb();
+      encodeMail = btoa("user@example.com");
+      const response = await get(ref(db, `posts/${encodeMail}`));
+      const response_pseudo = response.exportVal();
+      console.log("response: ", response_pseudo.pseudo);
+        if (response) {
+            setPseudo(response_pseudo.pseudo);
+        } else {
+            console.log("User not found or missing data in the response.");
+        }
+      };
+      getPseudoFromDb();
   }, [])
 
   const updateUserLocation = async () => {
@@ -57,11 +56,13 @@ const  MapScreen = ({navigation}) => {
 
       await Location.stopLocationUpdatesAsync("my-task-name");
     } catch (error) {
-      console.log("Error");
+      console.log("Error Location");
+      setUserLocation({
+        latitude: 43.669584,
+        longitude: 7.215500,
+      });
     }
   };
-
-  
 
   useEffect(() => {
     const cleanup = async () => {
@@ -99,13 +100,14 @@ const  MapScreen = ({navigation}) => {
         onRegionChangeComplete={() => {}}
       >
       {userLocation && (
-        <Marker coordinate={userLocation} title={`${Pseudo}'s marker`} isPreselected={true} />
+        <Marker onPress={() => setPseudo(Pseudo) } coordinate={userLocation} title={`${Pseudo}'s marker`} isPreselected={true} />
         )}
       </MapView>
         <Text onPress={() => {ProfilePress(), console.log("Profile clicked")}} style={styles.profile}> Profile </Text>
         {userLocation && (
           <Text onPress={() => {goToUserLocation(), console.log("Go To clicked")}} style={styles.GoBack}> Go to </Text>
         )}
+        <Text onPress={() =>  updateUserLocation()} style={styles.Update_Button}> Update </Text>
     </View>
   );
 }
@@ -124,6 +126,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     position: 'absolute',
     top: 115,
+    left: 10,
+    fontSize: 25,
+    color: "white",
+    fontWeight: "bold",
+  },
+  Update_Button: {
+    backgroundColor: "#000",
+    position: 'absolute',
+    top: 170,
     left: 10,
     fontSize: 25,
     color: "white",

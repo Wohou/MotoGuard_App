@@ -3,11 +3,12 @@ import MapView, { Marker } from "react-native-maps";
 import { StyleSheet, View, Text } from "react-native";
 import * as Location from "expo-location";
 import {encode as btoa} from 'base-64';
-import { ref, get } from 'firebase/database';
+import { ref, get, update } from 'firebase/database';
 import { db } from './GetData';
 
 const  MapScreen = ({navigation}) => {
   const [Pseudo, setPseudo] = useState(null);
+  const InMotion = false;
   const [userLocation, setUserLocation] = useState({
     latitude: 43.669584,
     longitude: 7.215500,
@@ -32,12 +33,28 @@ const  MapScreen = ({navigation}) => {
     }
   };
 
+  const logLocation = async () => {
+    await updateUserLocation();
+    encodeMail = btoa(window.email);
+    update(ref(db, `posts/${encodeMail}`), {
+      Latitude: userLocation.latitude,
+      Longitude: userLocation.longitude,
+    });
+  };
+
   useEffect(() => {
     updateUserLocation();
+
+    const intervalId = setInterval(() => {
+      if (InMotion != false) {
+        logLocation();
+      }
+    }, 10000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
-    // Get user's location
     const loadPseudo = async () => {
       await getPseudoFromDb();
     };
@@ -47,19 +64,23 @@ const  MapScreen = ({navigation}) => {
 
 
   const updateUserLocation = async () => {
-    let { status } = Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      setErrorMsg('Permission to access location was denied');
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permission to access location was denied');
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync({ enableHighAccuracy: true });
+      setUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+    } catch (error) {
+      console.error('Erreur lors de la récupération de la localisation :', error);
     }
-    let location = await Location.getCurrentPositionAsync({enableHighAccuracy: true});
-    setMapRegion({
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
-    console.log(location.coords.latitude, location.coords.longitude);
-    }
+  };
 
 
   const goToUserLocation = () => {
@@ -72,6 +93,10 @@ const  MapScreen = ({navigation}) => {
     mapRef.current.animateToRegion(region, 500);
   };
 
+  const FollowFriend = () => {
+    navigation.navigate("Follow");
+  }
+
   const ProfilePress = () => {
     navigation.navigate("Profile");
   };
@@ -82,15 +107,22 @@ const  MapScreen = ({navigation}) => {
         style={styles.map}
         onRegionChangeComplete={() => {}}
       >
-      {userLocation && (
-        <Marker onPress={() => setPseudo(Pseudo) } coordinate={userLocation} title={`${Pseudo}'s marker`} isPreselected={true} />
+        {userLocation && (
+          <Marker onPress={() => setPseudo(Pseudo)} coordinate={userLocation} title={`${Pseudo}'s marker`} isPreselected={true} />
         )}
       </MapView>
-        <Text onPress={() => {ProfilePress(), console.log("Profile clicked")}} style={styles.profile}> Profile </Text>
-        {userLocation && (
-          <Text onPress={() => {goToUserLocation(), getPseudoFromDb()}} style={styles.GoBack}> Go to </Text>
-        )}
-        <Text onPress={() =>  updateUserLocation()} style={styles.Update_Button}> Update </Text>
+      <Text onPress={() => { ProfilePress(), console.log("Profile clicked") }} style={styles.profile}> Profile </Text>
+      {userLocation && (
+        <Text onPress={() => { goToUserLocation(), getPseudoFromDb() }} style={styles.GoBack}> Go to </Text>
+      )}
+      <Text onPress={() => { updateUserLocation(), getPseudoFromDb() }} style={styles.Update_Button}> Update </Text>
+
+        <Text onPress={() => FollowFriend()} style={styles.Follow_Button}> Follow </Text>
+
+      <View style={styles.coordinatesContainer}>
+        <Text style={styles.coordinatesText}>Latitude: {userLocation.latitude.toFixed(6)}</Text>
+        <Text style={styles.coordinatesText}>Longitude: {userLocation.longitude.toFixed(6)}</Text>
+      </View>
     </View>
   );
 }
@@ -109,6 +141,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     position: 'absolute',
     top: 115,
+    left: 10,
+    fontSize: 25,
+    color: "white",
+    fontWeight: "bold",
+  },
+  Follow_Button: {
+    backgroundColor: "#000",
+    position: 'absolute',
+    top: 230,
     left: 10,
     fontSize: 25,
     color: "white",
@@ -135,14 +176,19 @@ const styles = StyleSheet.create({
     height: "10%",
     backgroundColor: "#ffffff",
   },
+  coordinatesContainer: {
+    position: 'absolute',
+    top: 50,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 10,
+    borderRadius: 5,
+  },
+  coordinatesText: {
+    color: 'white',
+    fontSize: 12,
+  },
 });
 
 export default MapScreen;
 
-// if (mapRef.current) {
-  //       mapRef.current.animateToRegion({
-  //         latitude: location.coords.latitude,
-  //         longitude: location.coords.longitude,
-  //         latitudeDelta: 0.010,
-  //         longitudeDelta: 0.006,
-  //       });

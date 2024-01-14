@@ -25,8 +25,6 @@ const LoginScreen = ({ navigation }) => {
     global.btoa = encode;
   }
 
-  console.log("email == ", email);
-
   const checkData = async () => {
     const encodeMail = btoa(email);
     const userRef = ref(db, `posts/${encodeMail}`);

@@ -1,51 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { ref, set, get, update } from 'firebase/database';
+import { ref, get, update } from 'firebase/database';
 import { db } from './GetData';
 import {encode as btoa} from 'base-64';
-import {global} from './App';
 
 const ProfilePage = () => {
+  encodeMail = btoa(window.email);
   const [pseudo, setPseudo] = useState('Utilisateur');
+  const [ProfilePhoto, setProfilePhoto] = useState('https://www.poleposition77.com/wp-content/uploads/2021/06/KTM-390-Duke-grise.jpg');
+
+  const [NewPDP, SetNewPDP] = useState(ProfilePhoto);
   const [NewPseudo, setNewPseudo] = useState(pseudo);
-  const [ProfilePhoto, setProfilePhoto] = useState('');
 
     useEffect(() => {
-        const getPseudoFromDb =  async () => {
-            encodeMail = btoa("user@example.com");
-            // encodeMail = btoa(global.mail.trim().toLowerCase());
+        const getDataFromDb =  async () => {
             const response = await get(ref(db, `posts/${encodeMail}`));
             setProfilePhoto(response.exportVal().pdp)
             setPseudo(response.exportVal().pseudo);
         };
-        getPseudoFromDb();
+        getDataFromDb();
     }, []);
-
-    const sendPhotoToDb = (ImageProfile) => {
-      encodedMail = btoa("user@example.com");
-      if (ImageProfile !== ''){
-        update(ref(db, `posts/${encodedMail}`),{
-          pdp: ImageProfile,
-        });
-    }}
 
     const pickImage = async () => {
       let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [4, 3],
         quality: 1,
       });
-      setProfilePhoto(result.assets[0].uri);
-      sendPhotoToDb(result.assets[0].uri)
+      if (!result.canceled) {
+        SetNewPDP(result.uri);
+        changeImageDB(result.uri);
+      }
+    };
+
+    const changeImageDB = (newPDP) => {
+      update(ref(db, `posts/${encodeMail}`), {
+        pdp: newPDP,
+      })
+        .then(() => {
+          setProfilePhoto(newPDP);
+          console.log("Image mise à jour avec succès !");
+        })
+        .catch((error) => {
+          console.error("Erreur lors de la mise à jour de l'image :", error);
+        });
     };
 
     const changePseudoDb = async () => {
         try {
-          encodeMail = btoa("user@example.com")
-          // encodeMail = btoa(global.mail.trim().toLowerCase());
-
           const currentData = await get(ref(db, `posts/${encodeMail}`));
           const currentPseudo = currentData.exportVal().pseudo;
 
@@ -65,28 +69,6 @@ const ProfilePage = () => {
         }
       };
 
-      const changeImageDb = async () => {
-        try {
-          encodeMail = btoa("user@example.com")
-          const currentData = await get(ref(db, `posts/${encodeMail}`));
-          const currentImage = currentData.exportVal().pdp;
-
-          if (currentImage !== NewImage) {
-            await update(ref(db, `posts/${encodeMail}`), {
-              pseudo: NewImage.trim(),
-            });
-
-            setPseudo(NewImage.trim());
-
-            console.log("Image mis à jour avec succès !");
-          } else {
-            console.log("L'image est la même. Aucune mise à jour nécessaire.");
-          }
-        } catch (error) {
-          console.error("Erreur lors de la mise à jour de l'image :", error);
-        }
-      };
-
   return (
     <View style={styles.container}>
       {ProfilePhoto && (
@@ -101,14 +83,14 @@ const ProfilePage = () => {
         </Text>
       <TextInput
         style={styles.input}
-        placeholder="Entrez votre pseudo"
+        placeholder="Changez votre pseudo"
         placeholderTextColor="white"
         onChangeText={(newPseudo) => setNewPseudo(newPseudo)}
         />
         <Text onPress={() => {changePseudoDb()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F", marginTop: 5}}>
-            Ajouter
+            Envoyez
         </Text>
-        <Text onPress={() => {pickImage()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F", marginTop: 50}}>
+        <Text onPress={() => {pickImage()}} style={{ fontWeight: "bold", fontSize: 20, color: "#C1121F", marginTop: 30}}>
         ✏️ Changer La Photo de profil
         </Text>
     </View>
@@ -124,23 +106,22 @@ const styles = StyleSheet.create({
   welcomeText: {
     marginTop: "2%",
     fontSize: 20,
-    marginBottom: 20,
+    marginBottom: 5,
     color: "white",
   },
   PseudoText: {
     marginTop: "2%",
     fontSize: 20,
-    marginBottom: 20,
     color: "white",
     fontWeight: "bold",
   },
   profileImage: {
     width: '100%',
-    height: 200,
+    aspectRatio: 1,
     resizeMode: 'cover',
   },
   input: {
-    marginTop: 20,
+    marginTop: 10,
     height: 40,
     width: '80%',
     borderColor: 'red',

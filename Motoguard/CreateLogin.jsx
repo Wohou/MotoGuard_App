@@ -3,8 +3,6 @@ import { StyleSheet, Text, View, TextInput, Pressable, Dimensions} from "react-n
 import { db } from "./GetData";
 import { ref, set, get } from 'firebase/database';
 import { encode } from 'base-64';
-import uuid from 'react-native-uuid';
-// import {global} from './App';
 
 const CreateLogin = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -59,16 +57,14 @@ const CreateLogin = ({ navigation }) => {
     set(ref(db, `posts/${encodedMail}`), {
       email: trimmedEmail,
       password: password,
-      uuid: uuid.v1(),
       pseudo: pseudofromMail,
       pdp: imageBase64,
-      CanAccesLocation: false,
+      friend: ["email for friend"],
       Latitude: 43.669584,
       Longitude: 7.215500,
+      InMotion: false,
     });
-    setEmail('')
-    setPassword('')
-    global.mail = trimmedEmail;
+    window.email = email;
   }
 
   return (
@@ -146,3 +142,4 @@ const styles = StyleSheet.create({
 });
 
 export default CreateLogin;
+

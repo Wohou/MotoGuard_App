@@ -7,8 +7,9 @@ import { ref, get, update } from 'firebase/database';
 import { db } from './GetData';
 
 const  MapScreen = ({navigation}) => {
+  let encodeMail = btoa(window.email);
   const [Pseudo, setPseudo] = useState(null);
-  const InMotion = false;
+  const [IsInMotion, SetMotion] = useState(false);
   const [userLocation, setUserLocation] = useState({
     latitude: 43.669584,
     longitude: 7.215500,
@@ -18,13 +19,13 @@ const  MapScreen = ({navigation}) => {
 
   const mapRef = useRef(null);
 
-  const getPseudoFromDb = async () => {
+  const getDataFromDb = async () => {
     try {
-      encodeMail = btoa("user@example.com");
       const response = await get(ref(db, `posts/${encodeMail}`));
-      const response_pseudo = response.exportVal();
-      if (response) {
-        setPseudo(response_pseudo.pseudo);
+      const data = response.exportVal();
+      if (data) {
+        setPseudo(data.pseudo);
+        SetMotion(data.InMotion);
       } else {
         console.log("User not found or missing data in the response.");
       }
@@ -33,35 +34,10 @@ const  MapScreen = ({navigation}) => {
     }
   };
 
-  const logLocation = async () => {
-    await updateUserLocation();
-    encodeMail = btoa(window.email);
-    update(ref(db, `posts/${encodeMail}`), {
-      Latitude: userLocation.latitude,
-      Longitude: userLocation.longitude,
-    });
-  };
 
   useEffect(() => {
     updateUserLocation();
-
-    const intervalId = setInterval(() => {
-      if (InMotion != false) {
-        logLocation();
-      }
-    }, 10000);
-
-    return () => clearInterval(intervalId);
   }, []);
-
-  useEffect(() => {
-    const loadPseudo = async () => {
-      await getPseudoFromDb();
-    };
-
-    loadPseudo();
-  }, [Pseudo]);
-
 
   const updateUserLocation = async () => {
     try {
@@ -93,6 +69,30 @@ const  MapScreen = ({navigation}) => {
     mapRef.current.animateToRegion(region, 500);
   };
 
+  const StartTrip = () => {
+    SetMotion(true);
+    const intervalId = setInterval(async () => {
+      try {
+        let location = await Location.getCurrentPositionAsync({ enableHighAccuracy: true });
+        update(ref(db, `posts/${encodeMail}`), {
+          InMotion: true,
+          Latitude: location.coords.latitude,
+          Longitude: location.coords.longitude,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }, 10000);
+    return () => clearInterval(intervalId);
+  };
+
+  const StopTrip = () => {
+    SetMotion(false)
+    update(ref(db, `posts/${encodeMail}`), {
+      InMotion: false,
+    });
+  }
+
   const FollowFriend = () => {
     navigation.navigate("Follow");
   }
@@ -111,13 +111,20 @@ const  MapScreen = ({navigation}) => {
           <Marker onPress={() => setPseudo(Pseudo)} coordinate={userLocation} title={`${Pseudo}'s marker`} isPreselected={true} />
         )}
       </MapView>
-      <Text onPress={() => { ProfilePress(), console.log("Profile clicked") }} style={styles.profile}> Profile </Text>
+      <Text onPress={() => ProfilePress()} style={styles.profile}> Profile </Text>
       {userLocation && (
-        <Text onPress={() => { goToUserLocation(), getPseudoFromDb() }} style={styles.GoBack}> Go to </Text>
+        <Text onPress={() => { goToUserLocation(), getDataFromDb() }} style={styles.GoBack}> Go to </Text>
       )}
-      <Text onPress={() => { updateUserLocation(), getPseudoFromDb() }} style={styles.Update_Button}> Update </Text>
+      <Text onPress={() => { updateUserLocation(), getDataFromDb() }} style={styles.Update_Button}> Update </Text>
 
         <Text onPress={() => FollowFriend()} style={styles.Follow_Button}> Follow </Text>
+
+        <Text onPress={() => StartTrip()} style={styles.Start_Button}> Start </Text>
+
+        {IsInMotion && (
+        <Text onPress={() => StopTrip()} style={styles.Stop_Button}> Stop </Text>
+        )}
+
 
       <View style={styles.coordinatesContainer}>
         <Text style={styles.coordinatesText}>Latitude: {userLocation.latitude.toFixed(6)}</Text>
@@ -128,6 +135,24 @@ const  MapScreen = ({navigation}) => {
 }
 
 const styles = StyleSheet.create({
+  Stop_Button: {
+    backgroundColor: "#000",
+    position: 'absolute',
+    top: 350,
+    left: 10,
+    fontSize: 25,
+    color: "white",
+    fontWeight: "bold",
+  },
+  Start_Button: {
+    backgroundColor: "#000",
+    position: 'absolute',
+    top: 280,
+    left: 10,
+    fontSize: 25,
+    color: "white",
+    fontWeight: "bold",
+  },
   profile: {
     backgroundColor: "#000",
     position: 'absolute',

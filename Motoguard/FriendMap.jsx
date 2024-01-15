@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import MapView, { Marker } from "react-native-maps";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity} from "react-native";
 import {encode as btoa} from 'base-64';
 import { ref, get, update } from 'firebase/database';
 import { db } from './GetData';
@@ -23,7 +23,6 @@ const FriendMap = ({ navigation }) => {
 
         const intervalId = setInterval(() => {
               GetFriendData();
-              console.log("Update");
           }, 10000);
           return () => clearInterval(intervalId);
     }, []);
@@ -50,13 +49,12 @@ const FriendMap = ({ navigation }) => {
             })
             SetFriendName(userdata.pseudo);
             SetFriendState(userdata.InMotion);
-            console.log("State: ", FriendState);
     } catch (error) {
         console.log("Erreur:", error);
     }
 };
 return (
-    <View style={styles.container}>
+  <View style={styles.container}>
     {FriendState ? (
       <>
         <Text style={styles.test}>Test with {window.friend_followed}</Text>
@@ -70,34 +68,75 @@ return (
         <Text onPress={() => { goToUserLocation() }} style={styles.GoTo}> Go to </Text>
       </>
     ) : (
-        <View>
-            <Text style={styles.falseName}>{FriendName}</Text>
-            <Text style={styles.road}>N'est pas sur la route</Text>
-            <Text style={styles.stay}>Restez prudent !!</Text>
-        </View>
-    )}
+      <View>
+      <View style={styles.nameAndRoadContainer}>
+        <Text style={styles.falseName}>{FriendName}</Text>
+        <Text style={styles.road}>n'est pas sur la route</Text>
+      </View>
+      <Text style={styles.stay}>Restez prudent !!</Text>
+      <TouchableOpacity
+          style={styles.followButton}
+          onPress={() => navigation.navigate('Follow')}
+        >
+          <Text style={styles.followButtonText}>Retour</Text>
+        </TouchableOpacity>
+    </View>
+  )}
   </View>
-    );
+);
 }
 
 const styles = StyleSheet.create({
-    GoTo: {
-        backgroundColor: "#000",
-        position: 'absolute',
-        top: 80,
-        left: 10,
-        fontSize: 25,
-        color: "white",
-        fontWeight: "bold",
-      },
-    container: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-      },
-      map: {
-        ...StyleSheet.absoluteFillObject,
-      },
+  followButton: {
+    backgroundColor: 'red',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  followButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  nameAndRoadContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  falseName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginRight: 5,
+  },
+  road: {
+    fontSize: 20,
+  },
+  stay: {
+    fontWeight: "bold",
+    fontSize: 18,
+    color: "red",
+    marginTop: 10,
+    left: 70,
+    alignItems: "center",
+  },
+  GoTo: {
+      backgroundColor: "#000",
+      position: "absolute",
+      top: 80,
+      left: 10,
+      fontSize: 25,
+      color: "white",
+      fontWeight: "bold",
+    },
+  container: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    map: {
+      ...StyleSheet.absoluteFillObject,
+    },
     test: {
         fontSize: 20,
         position: "absolute",

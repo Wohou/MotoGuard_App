@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Text, TextInput } from "react-native";
+import { StyleSheet, View, Text, TextInput, TouchableOpacity } from "react-native";
 import { encode as btoa } from 'base-64';
 import { ref, get, update } from 'firebase/database';
 import { db } from './GetData';
@@ -35,7 +35,6 @@ const FollowFriend = ({ navigation }) => {
         let FriendExist = false;
         const email_to_test = Friend_Name.toLocaleLowerCase().trim()
         const email_to_test_encoded = btoa(email_to_test);
-        console.log(email_to_test_encoded);
         if (encodeMail === email_to_test_encoded) {
             alert("You cannot friend yourself !")
             return
@@ -48,7 +47,6 @@ const FollowFriend = ({ navigation }) => {
         }
         if (FriendData && FriendData[2] && !FriendsArray.includes(FriendData[2])) {
             FriendsArray.push(FriendData[2])
-            console.log("here", FriendsArray);
         }
         update(ref(db, `posts/${encodeMail}`), {
             friend: FriendsArray,
@@ -61,9 +59,22 @@ const FollowFriend = ({ navigation }) => {
 
     const handleFriendPress = (friendName) => {
         window.friend_followed = friendName;
-        console.log(`Friend clicked : ${window.friend_followed}`);
         navigation.navigate("MapFriend");
     }
+
+    const handleDeleteFriend = (friendToDelete) => {
+        const updatedFriendsArray = FriendsArray.filter(
+           (friend) => friend !== friendToDelete
+        );
+
+        update(ref(db, `posts/${encodeMail}`), {
+           friend: updatedFriendsArray,
+        }).then(() => {
+           alert("Ami supprimé avec succès");
+           setFriendsArray(updatedFriendsArray);
+           setNumberFriend(updatedFriendsArray.length);
+        });
+     };
 
     const GetFriendFromDB = async () => {
         try {
@@ -74,8 +85,6 @@ const FollowFriend = ({ navigation }) => {
                 const friendsArray = Object.values(userData.friend);
                 setNumberFriend(friendsArray.length);
                 setFriendsArray(friendsArray);
-                console.log("Liste d'amis :", friendsArray);
-                console.log("Nombre d'amis :", friendsArray.length);
             } else {
                 console.log("Aucune donnée d'amis trouvée dans la base de données.");
             }
@@ -97,18 +106,24 @@ const FollowFriend = ({ navigation }) => {
             <Text onPress={() => AddFriendToDB(FriendToAdd)} style={styles.button_add}>Add Friend</Text>
             <Text onPress={() => GetFriendFromDB()} style={styles.buttonDB}>↻</Text>
             {NumberFriend > 1 ? (
-                <View style={styles.friendsContainer}>
+            <View style={styles.friendsContainer}>
                 <Text style={styles.friendsTitle}>Liste d'amis :</Text>
-                {FriendsArray.length > 1 &&
-                    Array.from({ length: FriendsArray.length }, (_, index) => index + 1).map((friendIndex) => (
+                {FriendsArray.map((friend, index) => (
+                    <View key={index} style={styles.friendItemContainer}>
                         <Text
-                            key={friendIndex}
-                            style={{ ...styles.friendItem, marginBottom: friendIndex * 30 }}
-                            onPress={() => handleFriendPress(FriendsArray[friendIndex])}
+                            style={styles.friendItem}
+                            onPress={() => handleFriendPress(friend)}
                         >
-                            {FriendsArray[friendIndex]}
+                            {friend}
                         </Text>
-                    ))}
+                        <TouchableOpacity
+                            style={styles.deleteButton}
+                            onPress={() => handleDeleteFriend(friend)}
+                        >
+                            <Text style={styles.deleteButtonText}>Supprimer</Text>
+                        </TouchableOpacity>
+                    </View>
+                )).slice(1)}
             </View>
             ) : (
                 <Text style={styles.noFriendText}>Aucun ami à afficher :(</Text>
@@ -118,6 +133,29 @@ const FollowFriend = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+    friendItemContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+    },
+    friendItem: {
+        fontSize: 16,
+        marginBottom: 5,
+    },
+    deleteButton: {
+        position: "relative",
+        top: 260,
+        left: 120,
+        backgroundColor: 'red',
+        borderRadius: 5,
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+    },
+     deleteButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+     },
     button_add: {
         fontWeight: "bold",
         position: "absolute",
@@ -174,7 +212,7 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         position: "absolute",
         top: 260,
-        left: 50,
+        left: -120,
     },
     noFriendText: {
         fontSize: 16,
